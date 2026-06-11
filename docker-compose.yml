@@ -1,46 +1,54 @@
 
 
+version: '3.8'
+
 services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
-    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - xpack.security.http.ssl.enabled=false
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
     ports:
       - "9200:9200"
     networks:
-      - elk-net
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.1
-    container_name: kibana
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    volumes:
-      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
-    networks:
-      - elk-net
+      - siem-net
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.1
-    container_name: logstash
     ports:
       - "5044:5044"
+      - "9600:9600"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
     depends_on:
       - elasticsearch
     networks:
-      - elk-net
-    volumes:
-      - ./test.conf:/usr/share/logstash/pipeline/test.conf:ro
+      - siem-net
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - siem-net
+
+  victim:
+    image: ubuntu:22.04
+    command: bash -c "apt update && apt install openssh-server -y && service ssh start && tail -f /dev/null"
+    networks:
+      - siem-net
+
+  attacker:
+    image: nicolaka/netshoot
+    command: tail -f /dev/null
+    networks:
+      - siem-net
 networks:
-  elk-net:
+  siem-net:
     driver: bridge

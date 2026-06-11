@@ -1,0 +1,14 @@
+# Kibana configuration
+
+server.name: kibana
+server.host: "0.0.0.0"
+
+# Elasticsearch host(s)
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# Security and encrypted saved objects keys (must be long and random)
+xpack.encryptedSavedObjects.encryptionKey: "A-very-long-random-string-32+chars"
+xpack.security.encryptionKey: "Another-very-long-random-string-32+chars"
+
+# Optional: reporting
+xpack.reporting.kibanaServer.hostname: "localhost"
